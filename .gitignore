@@ -1,0 +1,4 @@
+.idea
+job-scraping
+output.json
+*.pyc
