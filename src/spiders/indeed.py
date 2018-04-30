@@ -14,35 +14,29 @@ class IndeedSpider(scrapy.Spider):
 
     def parse(self, response):
         for job in response.css('.row.result'):
-            title = job.css
-
-            title_css_paths = [
-                '.jobtitle a *::text',
-                'a.jobtitle *::text',
-                'a.jobTitle *::text'
+            link_css_paths = [
+                '.jobtitle > a::attr("href")',
+                'a.jobtitle::attr("href")'
             ]
-            for path in title_css_paths:
-                title = get_inner_text(job.css(path))
-                if title:
-                    title = title.strip()
+            for path in link_css_paths:
+                link = get_inner_text(job.css(path))
+                if link:
+                    link = 'https://www.indeed.ca%s' % link.strip()
                     break
 
-            company_css_paths = [
-                '.company a *::text',
-                'span.company *::text'
-
-            ]
-            for path in company_css_paths:
-                company = get_inner_text(job.css(path))
-                if company:
-                    company = company.strip()
-                    break
-
-            yield {
-                'title': title,
-                'company': company,
-            }
+            # when you yield a Request in a callback method, Scrapy will schedule that request to be sent and register a
+            # callback method to be executed when that request finishes.
+            yield scrapy.Request(url=link, callback=self.parse_job_post_page)
 
         next_page = response.css('.pagination a:last-of-type::attr("href")').extract_first()
         if next_page is not None:
             yield response.follow(next_page, self.parse)
+
+    def parse_job_post_page(self, response):
+        # using yield or return doesn't seem to make much of a difference here
+        yield {
+            'job_title': get_inner_text(response.css('div[data-tn-component="jobHeader"] .jobtitle *::text')),
+            'employer': get_inner_text(response.css('div[data-tn-component="jobHeader"] .company::text')),
+            'description': get_inner_text(response.css('#job_summary div *::text'))
+        }
+
