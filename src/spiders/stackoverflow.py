@@ -16,8 +16,19 @@ class StackOverflowSpider(scrapy.Spider):
 
 
     def parse_job_post_page(self, response):
+        employer_css = [
+            '#job-detail .-name .employer::text',
+            '#job-detail .-name::text'
+        ]
+        for css in employer_css:
+            employer = response.css(css).extract_first()
+            if employer:
+                break
+
         yield {
+            'url': response.url,
             'job_title': response.css('#job-detail .-title .title::text').extract_first(),
-            'employer': response.css('#job-detail .-name .employer::text').extract_first(),
-            'description': get_inner_text(response.css('#job-detail .-job-description .description *::text')),
+            'employer': employer,
+            'technologies': response.css('#job-detail .-technologies .-tags a::text').extract(),
+            'description': response.css('#job-detail .-job-description .description').extract()
         }
