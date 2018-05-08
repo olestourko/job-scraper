@@ -1,6 +1,17 @@
 import scrapy
+from scrapy.loader import ItemLoader
+from scrapy.loader.processors import TakeFirst
 from urllib.parse import urljoin
 from src.utils import get_inner_text
+
+
+class JobPost(scrapy.Item):
+    url = scrapy.Field(output_processor=TakeFirst())
+    job_title = scrapy.Field(output_processor=TakeFirst())
+    employer = scrapy.Field(output_processor=TakeFirst())
+    technologies = scrapy.Field()
+    description = scrapy.Field(output_processor=TakeFirst())
+
 
 class StackOverflowSpider(scrapy.Spider):
     name = "StackOverflow Jobs"
@@ -29,7 +40,6 @@ class StackOverflowSpider(scrapy.Spider):
             if next_page_url:
                 yield response.follow(url=next_page_url, callback=self.parse)
 
-
     def parse_job_post_page(self, response):
         employer_css = [
             '#job-detail .-name .employer::text',
@@ -40,10 +50,10 @@ class StackOverflowSpider(scrapy.Spider):
             if employer:
                 break
 
-        yield {
-            'url': response.url,
-            'job_title': response.css('#job-detail .-title .title::text').extract_first(),
-            'employer': employer,
-            'technologies': response.css('#job-detail .-technologies .-tags a::text').extract(),
-            'description': response.css('#job-detail .-job-description .description').extract()
-        }
+        loader = ItemLoader(item=JobPost(), response=response)
+        loader.add_value(field_name='url', value=response.url)
+        loader.add_css(field_name='job_title', css='#job-detail .-title .title::text')
+        loader.add_value(field_name='employer', value=employer)
+        loader.add_css(field_name='technologies', css='#job-detail .-technologies .-tags a::text')
+        loader.add_css(field_name='description', css='#job-detail .-job-description .description')
+        yield loader.load_item()
