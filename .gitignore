@@ -1,4 +1,6 @@
 .idea
 job-scraping
 output.json
+indeed.json
+stackoverflow.json
 *.pyc
