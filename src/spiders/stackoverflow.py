@@ -2,6 +2,8 @@ import scrapy
 from scrapy.loader import ItemLoader
 from scrapy.loader.processors import TakeFirst
 from urllib.parse import urljoin
+import json
+import hashlib
 from src.utils import get_inner_text
 
 
@@ -11,6 +13,12 @@ class JobPost(scrapy.Item):
     employer = scrapy.Field(output_processor=TakeFirst())
     technologies = scrapy.Field()
     description = scrapy.Field(output_processor=TakeFirst())
+
+    @staticmethod
+    def get_mutable_hash(instance):
+        hash_algo = hashlib.md5()
+        hash_algo.update(json.dumps(instance.__dict__['_local_values']).encode('utf-8'))
+        return hash_algo.hexdigest()
 
 
 class StackOverflowSpider(scrapy.Spider):
@@ -25,8 +33,6 @@ class StackOverflowSpider(scrapy.Spider):
         super(StackOverflowSpider, self)
 
     def parse(self, response):
-        self.crawled_pages += 1
-        print(self.crawled_pages)
         base_url = 'https://stackoverflow.com'
 
         for job in response.css('.list.jobs .-job'):
@@ -39,6 +45,8 @@ class StackOverflowSpider(scrapy.Spider):
             next_page_url = response.css('.pagination .test-pagination-next::attr("href")').extract_first()
             if next_page_url:
                 yield response.follow(url=next_page_url, callback=self.parse)
+
+        self.crawled_pages += 1
 
     def parse_job_post_page(self, response):
         employer_css = [
