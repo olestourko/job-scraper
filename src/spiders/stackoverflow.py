@@ -29,7 +29,10 @@ class StackOverflowSpider(scrapy.Spider):
 
     def __init__(self, max_pages=None):
         self.crawled_pages = 0
-        self.max_pages = int(max_pages)
+        if max_pages is not None:
+            self.max_pages = int(max_pages)
+        else:
+            self.max_pages = None
         super(StackOverflowSpider, self)
 
     def parse(self, response):
