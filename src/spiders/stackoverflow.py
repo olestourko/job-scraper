@@ -38,8 +38,8 @@ class StackOverflowSpider(scrapy.Spider):
     def parse(self, response):
         base_url = 'https://stackoverflow.com'
 
-        for job in response.css('.list.jobs .-job'):
-            route = job.css('.-job-summary a::attr("href")').extract_first()
+        for job in response.css('.listResults .-job'):
+            route = job.css('h2 a.job-link::attr("href")').extract_first()
             url = urljoin(base_url, route)
             yield scrapy.Request(url=url, callback=self.parse_job_post_page)
 
@@ -52,19 +52,10 @@ class StackOverflowSpider(scrapy.Spider):
         self.crawled_pages += 1
 
     def parse_job_post_page(self, response):
-        employer_css = [
-            '#job-detail .-name .employer::text',
-            '#job-detail .-name::text'
-        ]
-        for css in employer_css:
-            employer = response.css(css).extract_first()
-            if employer:
-                break
-
         loader = ItemLoader(item=JobPost(), response=response)
         loader.add_value(field_name='url', value=response.url)
-        loader.add_css(field_name='job_title', css='#job-detail .-title .title::text')
-        loader.add_value(field_name='employer', value=employer)
-        loader.add_css(field_name='technologies', css='#job-detail .-technologies .-tags a::text')
-        loader.add_css(field_name='description', css='#job-detail .-job-description .description')
+        loader.add_css(field_name='job_title', css='.job-details--header > div > h1 > a::text')
+        loader.add_css(field_name='employer', css='.job-details--header > div > div:nth-child(2) > a::text')
+        loader.add_css(field_name='technologies', css='#overview-items > section:nth-child(2) > div > a::text')
+        loader.add_css(field_name='description', css='#overview-items > section:nth-child(3) > div')
         yield loader.load_item()
