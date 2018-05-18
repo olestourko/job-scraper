@@ -53,9 +53,20 @@ class StackOverflowSpider(scrapy.Spider):
 
     def parse_job_post_page(self, response):
         loader = ItemLoader(item=JobPost(), response=response)
-        loader.add_value(field_name='url', value=response.url)
-        loader.add_css(field_name='job_title', css='.job-details--header > div > h1 > a::text')
-        loader.add_css(field_name='employer', css='.job-details--header > div > div:nth-child(2) > a::text')
-        loader.add_css(field_name='technologies', css='#overview-items > section:nth-child(2) > div > a::text')
-        loader.add_css(field_name='description', css='#overview-items > section:nth-child(3) > div')
+        n_sections = len(response.css('#overview-items section').extract())
+        # Regular Job Post
+        if n_sections == 3:
+            loader.add_value(field_name='url', value=response.url)
+            loader.add_css(field_name='job_title', css='.job-details--header > div > h1 > a::text')
+            loader.add_css(field_name='employer', css='.job-details--header > div > div:nth-child(2) > a::text')
+            loader.add_css(field_name='technologies', css='#overview-items > section:nth-child(2) > div > a::text')
+            loader.add_css(field_name='description', css='#overview-items > section:nth-child(3) > div')
+        # Job Post with extra "High Response Rate" section
+        elif n_sections == 4:
+            loader.add_value(field_name='url', value=response.url)
+            loader.add_css(field_name='job_title', css='.job-details--header > div > h1 > a::text')
+            loader.add_css(field_name='employer', css='.job-details--header > div > div:nth-child(2) > a::text')
+            loader.add_css(field_name='technologies', css='#overview-items > section:nth-child(3) > div > a::text')
+            loader.add_css(field_name='description', css='#overview-items > section:nth-child(4) > div')
+
         yield loader.load_item()
