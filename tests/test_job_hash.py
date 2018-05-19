@@ -26,8 +26,6 @@ class TestJobHash(unittest.TestCase):
         loader_3.add_value(field_name='technologies', value=['tech_2'])
         loader_3.add_value(field_name='description', value='description_2')
 
-        print(JobPost.get_mutable_hash(loader_1))
-
         assert hash(loader_1) != hash(loader_2)
         assert hash(loader_2) != hash(loader_3)
         assert JobPost.get_mutable_hash(loader_1) != JobPost.get_mutable_hash(loader_2)

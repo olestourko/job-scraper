@@ -1,6 +1,12 @@
-def get_inner_text(selector):
+def get_inner_text(selector, seperator=' '):
     inner_text = ''
-    for child in selector:
-        inner_text = '%s %s' % (inner_text, child.extract())
+
+    first = True
+    for text in selector.css('*::text').extract():
+        if first:
+            first = False
+            inner_text = text
+        else:
+            inner_text = '%s%s%s' % (inner_text, seperator, text)
 
     return inner_text
