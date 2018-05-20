@@ -1,23 +1,27 @@
 import scrapy
 from scrapy.loader import ItemLoader
-from scrapy.loader.processors import TakeFirst
+from scrapy.loader.processors import TakeFirst, MapCompose
+from scrapy.utils.serialize import ScrapyJSONEncoder
 from urllib.parse import urljoin
 import json
 import hashlib
 from src.utils import get_inner_text
-
+from src import storage
 
 class JobPost(scrapy.Item):
     url = scrapy.Field(output_processor=TakeFirst())
     job_title = scrapy.Field(output_processor=TakeFirst())
     employer = scrapy.Field(output_processor=TakeFirst())
     technologies = scrapy.Field()
-    description = scrapy.Field(output_processor=TakeFirst())
+    # str.strip is unicode.strip in Python 2.x
+    description = scrapy.Field(input_processor=MapCompose(str.strip), output_processor=TakeFirst())
 
     @staticmethod
     def get_mutable_hash(instance):
+        encoder = ScrapyJSONEncoder()
+        json_encoded_instance = encoder.encode(instance)
         hash_algo = hashlib.md5()
-        hash_algo.update(json.dumps(instance.__dict__['_local_values']).encode('utf-8'))
+        hash_algo.update(json.dumps(json_encoded_instance).encode('utf-8'))
         return hash_algo.hexdigest()
 
 
@@ -51,6 +55,9 @@ class StackOverflowSpider(scrapy.Spider):
 
         self.crawled_pages += 1
 
+    def closed(self, reason):
+        storage.write_to_disk(file=open('./storage.pickle', 'wb'))
+
     def parse_job_post_page(self, response):
         loader = ItemLoader(item=JobPost(), response=response)
         n_sections = len(response.css('#overview-items section').extract())
@@ -60,13 +67,15 @@ class StackOverflowSpider(scrapy.Spider):
             loader.add_css(field_name='job_title', css='.job-details--header > div > h1 > a::text')
             loader.add_css(field_name='employer', css='.job-details--header > div > div:nth-child(2) > a::text')
             loader.add_css(field_name='technologies', css='#overview-items > section:nth-child(2) > div > a::text')
-            loader.add_value(field_name='description', value=get_inner_text(response.css('#overview-items > section:nth-child(3) > div')))
+            loader.add_value(field_name='description',
+                             value=get_inner_text(response.css('#overview-items > section:nth-child(3) > div')))
         # Job Post with extra "High Response Rate" section
         elif n_sections == 4:
             loader.add_value(field_name='url', value=response.url)
             loader.add_css(field_name='job_title', css='.job-details--header > div > h1 > a::text')
             loader.add_css(field_name='employer', css='.job-details--header > div > div:nth-child(2) > a::text')
             loader.add_css(field_name='technologies', css='#overview-items > section:nth-child(3) > div > a::text')
-            loader.add_value(field_name='description', value=get_inner_text(response.css('#overview-items > section:nth-child(4) > div')))
+            loader.add_value(field_name='description',
+                             value=get_inner_text(response.css('#overview-items > section:nth-child(4) > div')))
 
         yield loader.load_item()
