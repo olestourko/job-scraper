@@ -1,11 +1,10 @@
-from .spiders.stackoverflow import JobPost
 import pickle
 
 __items = dict()
 
 
 def store(item):
-    key = JobPost.get_mutable_hash(item)
+    key = item.get_mutable_hash()
     if key in __items:
         raise Exception('The item has already been stored previously.')
     else:
@@ -22,7 +21,6 @@ def write_to_disk(file=None):
     else:
         with open('./storage.pickle', 'wb') as file:
             pickle.dump(obj=__items, file=file)
-            print('A')
 
 
 def read_from_disk(file=None):

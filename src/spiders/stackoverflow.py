@@ -7,6 +7,7 @@ import json
 import hashlib
 from src.utils import get_inner_text
 from src import storage
+import logging
 
 class JobPost(scrapy.Item):
     url = scrapy.Field(output_processor=TakeFirst())
@@ -16,10 +17,9 @@ class JobPost(scrapy.Item):
     # str.strip is unicode.strip in Python 2.x
     description = scrapy.Field(input_processor=MapCompose(str.strip), output_processor=TakeFirst())
 
-    @staticmethod
-    def get_mutable_hash(instance):
+    def get_mutable_hash(self):
         encoder = ScrapyJSONEncoder()
-        json_encoded_instance = encoder.encode(instance)
+        json_encoded_instance = encoder.encode(self)
         hash_algo = hashlib.md5()
         hash_algo.update(json.dumps(json_encoded_instance).encode('utf-8'))
         return hash_algo.hexdigest()
@@ -37,6 +37,12 @@ class StackOverflowSpider(scrapy.Spider):
             self.max_pages = int(max_pages)
         else:
             self.max_pages = None
+
+        try:
+            storage.read_from_disk(file=open('./storage.pickle', 'rb'))
+        except Exception as e:
+            logging.info(msg='Storage file does not exist; a new one will be created.')
+
         super(StackOverflowSpider, self)
 
     def parse(self, response):

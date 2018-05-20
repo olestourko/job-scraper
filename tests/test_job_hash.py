@@ -1,5 +1,4 @@
 import unittest
-from .context import src
 from scrapy.loader import ItemLoader
 from src.spiders.stackoverflow import JobPost
 
@@ -32,8 +31,8 @@ class TestJobHash(unittest.TestCase):
 
         assert hash(loader_1) != hash(loader_2)
         assert hash(loader_2) != hash(loader_3)
-        assert JobPost.get_mutable_hash(loader_1.item) != JobPost.get_mutable_hash(loader_2.item)
-        assert JobPost.get_mutable_hash(loader_2.item) == JobPost.get_mutable_hash(loader_3.item)
+        assert loader_1.item.get_mutable_hash() != loader_2.item.get_mutable_hash()
+        assert loader_2.item.get_mutable_hash() == loader_3.item.get_mutable_hash()
 
 if __name__ == '__main__':
     unittest.main()
