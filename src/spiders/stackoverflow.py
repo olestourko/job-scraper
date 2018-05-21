@@ -31,12 +31,11 @@ class StackOverflowSpider(scrapy.Spider):
         'https://stackoverflow.com/jobs?med=site-ui&ref=jobs-tab&sort=p'
     ]
 
-    def __init__(self, max_pages=None):
+    def __init__(self, max_pages=None, max_posts=None):
         self.crawled_pages = 0
-        if max_pages is not None:
-            self.max_pages = int(max_pages)
-        else:
-            self.max_pages = None
+        self.crawled_posts = 0
+        self.max_pages = int(max_pages) if max_pages is not None else None
+        self.max_posts = int(max_posts) if max_posts is not None else None
 
         try:
             storage.read_from_disk(file=open('./storage.pickle', 'rb'))
@@ -49,9 +48,13 @@ class StackOverflowSpider(scrapy.Spider):
         base_url = 'https://stackoverflow.com'
 
         for job in response.css('.listResults .-job'):
-            route = job.css('h2 a.job-link::attr("href")').extract_first()
-            url = urljoin(base_url, route)
-            yield scrapy.Request(url=url, callback=self.parse_job_post_page)
+            if self.max_posts is None or self.crawled_posts < self.max_posts:
+                route = job.css('h2 a.job-link::attr("href")').extract_first()
+                url = urljoin(base_url, route)
+                yield scrapy.Request(url=url, callback=self.parse_job_post_page)
+                self.crawled_posts += 1
+            else:
+                break
 
         # Go to the next page
         if self.max_pages is None or self.crawled_pages < self.max_pages:

@@ -24,6 +24,8 @@ def write_to_disk(file=None):
 
 
 def read_from_disk(file=None):
+    global __items
+
     if file is not None:
         __items = pickle.load(file=file)
     else:
