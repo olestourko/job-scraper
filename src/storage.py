@@ -1,12 +1,15 @@
 import pickle
+import hashlib
 
 __items = dict()
 
 
 def store(item):
-    key = item.get_mutable_hash()
+    hash_algo = hashlib.md5()
+    hash_algo.update(item['url'].encode('utf-8'))
+    key = hash_algo.hexdigest()
     if key in __items:
-        raise Exception('The item has already been stored previously.')
+        raise Exception('Item with hash {} already exists in storage.'.format(key))
     else:
         __items[key] = item
 

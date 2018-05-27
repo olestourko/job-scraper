@@ -35,6 +35,9 @@ class TestStorage(unittest.TestCase):
 
     def test_read_from_disk(self):
         storage.store(self.item)
+        with open('./tests/storage.pickle', 'wb') as file:
+            storage.write_to_disk(file=file)
+
         with open('./tests/storage.pickle', 'rb') as file:
             storage.read_from_disk(file=file)
             assert storage.get_count() == 1

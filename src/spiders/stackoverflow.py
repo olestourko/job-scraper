@@ -9,6 +9,7 @@ from src.utils import get_inner_text
 from src import storage
 import logging
 
+
 class JobPost(scrapy.Item):
     url = scrapy.Field(output_processor=TakeFirst())
     job_title = scrapy.Field(output_processor=TakeFirst())
@@ -16,13 +17,6 @@ class JobPost(scrapy.Item):
     technologies = scrapy.Field()
     # str.strip is unicode.strip in Python 2.x
     description = scrapy.Field(input_processor=MapCompose(str.strip), output_processor=TakeFirst())
-
-    def get_mutable_hash(self):
-        encoder = ScrapyJSONEncoder()
-        json_encoded_instance = encoder.encode(self)
-        hash_algo = hashlib.md5()
-        hash_algo.update(json.dumps(json_encoded_instance).encode('utf-8'))
-        return hash_algo.hexdigest()
 
 
 class StackOverflowSpider(scrapy.Spider):
