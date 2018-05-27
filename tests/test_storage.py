@@ -11,7 +11,7 @@ class TestStorage(unittest.TestCase):
         loader.add_value(field_name='url', value='url_1')
         loader.add_value(field_name='job_title', value='job_title_1')
         loader.add_value(field_name='employer', value='employer_1')
-        loader.add_value(field_name='technologies', value=['tech_1'])
+        loader.add_value(field_name='technologies', value=['tech_1', 'tech_2'])
         loader.add_value(field_name='description', value='description_1')
         loader.load_item()
         self.item = loader.item
@@ -41,6 +41,13 @@ class TestStorage(unittest.TestCase):
         with open('./tests/storage.pickle', 'rb') as file:
             storage.read_from_disk(file=file)
             assert storage.get_count() == 1
+
+    def test_encode_decode(self):
+        item_dict = dict(self.item)
+        decoded_item = storage.dict_to_item(item_dict)
+        assert type(decoded_item) == JobPost
+        assert decoded_item['url'] == self.item['url']
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,14 +1,10 @@
 import scrapy
 from scrapy.loader import ItemLoader
 from scrapy.loader.processors import TakeFirst, MapCompose
-from scrapy.utils.serialize import ScrapyJSONEncoder
 from urllib.parse import urljoin
-import json
-import hashlib
 from src.utils import get_inner_text
 from src import storage
 import logging
-
 
 class JobPost(scrapy.Item):
     url = scrapy.Field(output_processor=TakeFirst())
